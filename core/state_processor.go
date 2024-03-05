@@ -83,9 +83,9 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		ProcessBeaconBlockRoot(*beaconRoot, vmenv, statedb)
 	}
 	// Iterate over and process the individual transactions
+	// TTA log
+	start := time.Now()
 	for i, tx := range block.Transactions() {
-		// TTA log
-		start := time.Now()
 		msg, err := TransactionToMessage(tx, signer, header.BaseFee)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
@@ -97,10 +97,11 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		}
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
-		if tx.Data() != nil && len(tx.Data()) > 0 {
-			log.Info("### Process tx hash: ", "hash", tx.Hash(), "Transaction Execution Time: ", time.Since(start))
-		}
+		// if tx.Data() != nil && len(tx.Data()) > 0 {
+		// 	log.Info("### Process tx hash: ", "hash", tx.Hash(), "Transaction Execution Time: ", time.Since(start))
+		// }
 	}
+	log.Error("### Process tx hash: ", "hash", block.Hash(), "Transaction Execution Time: ", time.Since(start))
 	// Fail if Shanghai not enabled and len(withdrawals) is non-zero.
 	withdrawals := block.Withdrawals()
 	if len(withdrawals) > 0 && !p.config.IsShanghai(block.Number(), block.Time()) {
